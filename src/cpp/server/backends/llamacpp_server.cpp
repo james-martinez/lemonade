@@ -96,9 +96,20 @@ static std::vector<std::string> parse_custom_args(const std::string& custom_args
     std::string current_arg;
     bool in_quotes = false;
     char quote_char = '\0';
+    bool escape_next = false;
 
     for (char c : custom_args_str) {
-        if (!in_quotes && (c == '"' || c == '\'')) {
+        if (escape_next) {
+            if (c == '"' || c == '\'' || c == '\\') {
+                current_arg += c;
+            } else {
+                current_arg += '\\';
+                current_arg += c;
+            }
+            escape_next = false;
+        } else if (c == '\\') {
+            escape_next = true;
+        } else if (!in_quotes && (c == '"' || c == '\'')) {
             in_quotes = true;
             quote_char = c;
         } else if (in_quotes && c == quote_char) {
@@ -112,6 +123,10 @@ static std::vector<std::string> parse_custom_args(const std::string& custom_args
         } else {
             current_arg += c;
         }
+    }
+
+    if (escape_next) {
+        current_arg += '\\';
     }
 
     if (!current_arg.empty()) {
